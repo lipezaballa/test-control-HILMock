@@ -28,32 +28,29 @@ func (hilMock *HilMock) SetBackConn(conn *websocket.Conn) {
 func (hilMock *HilMock) startIDLE() {
 	trace.Info().Msg("IDLE")
 	ticker := time.NewTicker(1 * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			_, msgByte, err := hilMock.backConn.ReadMessage()
-			if err != nil {
-				trace.Error().Err(err).Msg("error receiving message in IDLE")
-			} else {
-				msg := string(msgByte)
-				switch msg {
-				case START_SIMULATION:
+	for range ticker.C {
+		_, msgByte, err := hilMock.backConn.ReadMessage()
+		if err != nil {
+			trace.Error().Err(err).Msg("error receiving message in IDLE")
+		} else {
+			msg := string(msgByte)
+			switch msg {
+			case START_SIMULATION:
 
-					errStarting := hilMock.backConn.WriteMessage(websocket.BinaryMessage, []byte(START_SIMULATION))
-					if errStarting != nil {
-						trace.Error().Err(errStarting).Msg("Error sending message of starting simultaion to backend")
-						break
-					}
-					fmt.Println(START_SIMULATION)
+				errStarting := hilMock.backConn.WriteMessage(websocket.BinaryMessage, []byte(START_SIMULATION))
+				if errStarting != nil {
+					trace.Error().Err(errStarting).Msg("Error sending message of starting simultaion to backend")
+					break
+				}
 
-					err := hilMock.startSimulationState()
-					trace.Info().Msg("IDLE")
+				err := hilMock.startSimulationState()
+				trace.Info().Msg("IDLE")
 
-					if err != nil {
-						return
-					}
+				if err != nil {
+					return
 				}
 			}
+
 		}
 
 	}
@@ -98,7 +95,12 @@ func (hilMock *HilMock) readOrdersBackend(done <-chan struct{}, errChan chan<- e
 					return //FIXME
 				}
 				if stringMsg == FINISH_SIMULATION {
-					trace.Info().Msg("Finsih simulation")
+					trace.Info().Msg("Finish simulation")
+					errStoping := hilMock.backConn.WriteMessage(websocket.BinaryMessage, []byte(FINISH_SIMULATION))
+					if errStoping != nil {
+						trace.Error().Err(errStoping).Msg("Error returning finish msg to back")
+						errChan <- errStoping
+					}
 					stopChan <- struct{}{}
 					return
 				}
@@ -115,7 +117,7 @@ func (hilMock *HilMock) readOrdersBackend(done <-chan struct{}, errChan chan<- e
 					order.Read(msg[2:])
 					trace.Info().Msg(fmt.Sprintf("Control order: %v", order))
 				default:
-					fmt.Println("Does NOT match any type")
+					trace.Warn().Msg("Does NOT match any type")
 				}
 			}
 
