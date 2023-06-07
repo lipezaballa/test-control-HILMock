@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"time"
@@ -27,50 +28,59 @@ func (hilMock *HilMock) SetBackConn(conn *websocket.Conn) {
 
 func (hilMock *HilMock) startIDLE() {
 	trace.Info().Msg("IDLE")
-	ticker := time.NewTicker(1 * time.Second)
-	for range ticker.C {
-		_, msgByte, err := hilMock.backConn.ReadMessage()
-		if err != nil {
-			trace.Error().Err(err).Msg("error receiving message in IDLE")
-		} else {
-			msg := string(msgByte)
-			switch msg {
-			case START_SIMULATION:
 
-				errStarting := hilMock.backConn.WriteMessage(websocket.BinaryMessage, []byte(START_SIMULATION))
-				if errStarting != nil {
-					trace.Error().Err(errStarting).Msg("Error sending message of starting simultaion to backend")
-					break
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			_, msgByte, err := hilMock.backConn.ReadMessage()
+			if err != nil {
+				trace.Error().Err(err).Msg("error receiving message in IDLE")
+				cancel()
+			} else {
+				msg := string(msgByte)
+				switch msg {
+				case START_SIMULATION:
+
+					errStarting := hilMock.backConn.WriteMessage(websocket.BinaryMessage, []byte(START_SIMULATION))
+					if errStarting != nil {
+						trace.Error().Err(errStarting).Msg("Error sending message of starting simultaion to backend")
+						cancel()
+						break
+					}
+
+					err := hilMock.startSimulationState(ctx, cancel)
+					trace.Info().Msg("IDLE")
+
+					if err != nil {
+						cancel()
+						return
+					}
 				}
 
-				err := hilMock.startSimulationState()
-				trace.Info().Msg("IDLE")
-
-				if err != nil {
-					return
-				}
 			}
-
 		}
 
 	}
 }
 
-func (hilMock *HilMock) startSimulationState() error {
+func (hilMock *HilMock) startSimulationState(ctx context.Context, cancel context.CancelFunc) error {
 	errChan := make(chan error)
 	done := make(chan struct{})
-	//dataChan := make(chan VehicleState) FIXME: Is it necessary to store them?
-	//orderChan := make(chan Order) FIXME: Is it necessary to store them?
 	stopChan := make(chan struct{})
 	trace.Info().Msg("Simulation state")
 
-	hilMock.readOrdersBackend(done, errChan, stopChan)
-	hilMock.sendVehicleState(done, errChan)
+	hilMock.readOrdersBackend(ctx, errChan, stopChan)
+	hilMock.sendVehicleState(ctx, errChan, done)
 
 	for {
 		select {
 		case err := <-errChan:
-			close(done)
+			cancel()
 			return err
 		case <-stopChan:
 			close(done)
@@ -80,11 +90,11 @@ func (hilMock *HilMock) startSimulationState() error {
 	}
 }
 
-func (hilMock *HilMock) readOrdersBackend(done <-chan struct{}, errChan chan<- error, stopChan chan<- struct{}) {
+func (hilMock *HilMock) readOrdersBackend(ctx context.Context, errChan chan<- error, stopChan chan<- struct{}) {
 	go func() {
 		for {
 			select {
-			case <-done:
+			case <-ctx.Done(): //FIXME: Make sure this part is run
 				return
 			default:
 				_, msg, err := hilMock.backConn.ReadMessage()
@@ -92,7 +102,7 @@ func (hilMock *HilMock) readOrdersBackend(done <-chan struct{}, errChan chan<- e
 				if err != nil {
 					trace.Error().Err(err).Msg("Error reading message from back-end")
 					errChan <- err
-					return //FIXME
+					return
 				}
 				if stringMsg == FINISH_SIMULATION {
 					trace.Info().Msg("Finish simulation")
@@ -125,12 +135,14 @@ func (hilMock *HilMock) readOrdersBackend(done <-chan struct{}, errChan chan<- e
 	}()
 }
 
-func (hilMock *HilMock) sendVehicleState(done <-chan struct{}, errChan chan<- error) {
+func (hilMock *HilMock) sendVehicleState(ctx context.Context, errChan chan<- error, done <-chan struct{}) {
 	go func() {
 		ticker := time.NewTicker(2 * time.Second)
 		for {
 			select {
 			case <-done:
+				return
+			case <-ctx.Done():
 				return
 			case <-ticker.C:
 				vehiclesState := []VehicleState{}

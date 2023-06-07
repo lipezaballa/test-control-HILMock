@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	trace "github.com/rs/zerolog/log"
 )
 
 var upgrader = websocket.Upgrader{
@@ -33,7 +33,7 @@ func (server *Server) SetConnHandler(handler func(conn *websocket.Conn)) { //TOD
 func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Error upgrading connection:", err)
+		trace.Error().Err(err).Msg("Error upgrading connection")
 		return
 	}
 	server.handleConn(conn)

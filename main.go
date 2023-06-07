@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net"
 	"net/url"
 
 	"github.com/gorilla/websocket"
+	trace "github.com/rs/zerolog/log"
 )
 
 var traceLevel = flag.String("trace", "info", "set the trace level (\"fatal\", \"error\", \"warn\", \"info\", \"debug\", \"trace\")")
@@ -22,13 +22,16 @@ func main() {
 		NetDialContext: (&net.Dialer{LocalAddr: &net.TCPAddr{IP: net.ParseIP("127.0.0.2")}}).DialContext,
 	}
 
-	conn, _, err := d.Dial(u.String(), nil)
-	if err != nil {
-		log.Fatal("Error connecting WebSocket:", err)
+	for {
+		conn, _, err := d.Dial(u.String(), nil)
+		if err != nil {
+			trace.Error().Err(err).Msg("Error connecting WebSocket")
+			return
+		}
+
+		hilMock := NewHilMock()
+		hilMock.SetBackConn(conn)
+
+		hilMock.startIDLE()
 	}
-
-	hilMock := NewHilMock()
-	hilMock.SetBackConn(conn)
-
-	hilMock.startIDLE()
 }
