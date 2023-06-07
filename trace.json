@@ -1,0 +1,18 @@
+{"level":"info","time":1686096518988745300,"caller":"hilMock.go:27","message":"IDLE"}
+{"level":"info","time":1686096548882269400,"caller":"hilMock.go:66","message":"Simulation state"}
+{"level":"info","time":1686096550885737800,"caller":"hilMock.go:135","message":"[{18.66 19.42 18 45.16}]"}
+{"level":"info","time":1686096552897336200,"caller":"hilMock.go:135","message":"[{12.52 11.21 89 28.47}]"}
+{"level":"info","time":1686096554898562500,"caller":"hilMock.go:135","message":"[{16.68 6.2 66 28.86}]"}
+{"level":"info","time":1686096556006988300,"caller":"hilMock.go:114","message":"Control order: {3 true}"}
+{"level":"info","time":1686096556898463000,"caller":"hilMock.go:135","message":"[{17.75 8.87 15 41.03}]"}
+{"level":"info","time":1686096558534376000,"caller":"hilMock.go:114","message":"Control order: {3 false}"}
+{"level":"info","time":1686096558889846800,"caller":"hilMock.go:135","message":"[{12.98 16.59 31 25.3}]"}
+{"level":"info","time":1686096559043986500,"caller":"hilMock.go:114","message":"Control order: {0 true}"}
+{"level":"info","time":1686096560015871100,"caller":"hilMock.go:114","message":"Control order: {0 false}"}
+{"level":"info","time":1686096560892869200,"caller":"hilMock.go:135","message":"[{11.54 3.42 47 58.28}]"}
+{"level":"info","time":1686096561906062300,"caller":"hilMock.go:99","message":"Finsih simulation"}
+{"level":"info","time":1686096561906826600,"caller":"hilMock.go:48","message":"IDLE"}
+{"level":"info","time":1686096579067066800,"caller":"hilMock.go:66","message":"Simulation state"}
+{"level":"info","time":1686096581072180100,"caller":"hilMock.go:135","message":"[{21.3 9.1 0 45.22}]"}
+{"level":"error","error":"websocket: close 1002 (protocol error): RSV1 set, RSV3 set, bad opcode 7, bad MASK","time":1686096581073389100,"caller":"hilMock.go:94","message":"Error reading message from back-end"}
+{"level":"info","time":1686096581075335200,"caller":"hilMock.go:48","message":"IDLE"}
