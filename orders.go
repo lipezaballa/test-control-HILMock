@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 )
 
-const FRONT_ORDER_ID = 2
+const FORM_ORDER_ID = 2
 const CONTROL_ORDER_ID = 3
 
 type Order interface {
@@ -19,7 +19,7 @@ type FormOrder struct {
 
 func (order FormOrder) Bytes() []byte {
 	idBuf := make([]byte, 2)
-	binary.LittleEndian.PutUint16(idBuf, FRONT_ORDER_ID)
+	binary.LittleEndian.PutUint16(idBuf, FORM_ORDER_ID)
 	kindBuf := []byte(order.Kind)
 	payloadBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(payloadBuf, uint64(order.Payload))

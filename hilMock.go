@@ -9,8 +9,10 @@ import (
 	trace "github.com/rs/zerolog/log"
 )
 
-const START_MSG = "start_simulation"
+const START_SIMULATION = "start_simulation"
 const FINISH_SIMULATION = "finish_simulation"
+
+const VEHICLE_STATE_ID = 1
 
 type HilMock struct {
 	backConn *websocket.Conn
@@ -35,14 +37,14 @@ func (hilMock *HilMock) startIDLE() {
 			} else {
 				msg := string(msgByte)
 				switch msg {
-				case START_MSG:
+				case START_SIMULATION:
 
-					errStarting := hilMock.backConn.WriteMessage(websocket.BinaryMessage, []byte(START_MSG))
+					errStarting := hilMock.backConn.WriteMessage(websocket.BinaryMessage, []byte(START_SIMULATION))
 					if errStarting != nil {
 						trace.Error().Err(errStarting).Msg("Error sending message of starting simultaion to backend")
 						break
 					}
-					fmt.Println(START_MSG)
+					fmt.Println(START_SIMULATION)
 
 					err := hilMock.startSimulationState()
 					trace.Info().Msg("IDLE")
@@ -131,7 +133,7 @@ func (hilMock *HilMock) sendVehicleState(done <-chan struct{}, errChan chan<- er
 			case <-ticker.C:
 				vehiclesState := []VehicleState{}
 				vehicleState := RandomVehicleState()
-				vehiclesState = append(vehiclesState, vehicleState)
+				vehiclesState = append(vehiclesState, vehicleState) //FIXME: As an array?
 				trace.Info().Msg(fmt.Sprint(vehiclesState))
 				head := make([]byte, 2)
 				binary.LittleEndian.PutUint16(head, VEHICLE_STATE_ID)

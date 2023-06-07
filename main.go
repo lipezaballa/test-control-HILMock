@@ -9,8 +9,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const VEHICLE_STATE_ID = 1
-
 var traceLevel = flag.String("trace", "info", "set the trace level (\"fatal\", \"error\", \"warn\", \"info\", \"debug\", \"trace\")")
 var traceFile = flag.String("log", "trace.json", "set the trace log file")
 
